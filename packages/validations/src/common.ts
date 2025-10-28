@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod/v4'
 
 // Common schemas
 export const idParamSchema = z.object({

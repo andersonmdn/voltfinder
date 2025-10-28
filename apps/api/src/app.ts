@@ -3,7 +3,7 @@ import jwt from '@fastify/jwt'
 import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import fastify from 'fastify'
-import { jsonSchemaTransform, serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod'
+import { jsonSchemaTransform, jsonSchemaTransformObject, serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod'
 import { authRoutes } from './routes/auth'
 import { stationRoutes } from './routes/stations'
 import { userRoutes } from './routes/users'
@@ -74,11 +74,12 @@ export const buildApp = async () => {
       },
     },
     transform: jsonSchemaTransform,
+    transformObject: jsonSchemaTransformObject,
   })
 
   await app.register(swaggerUI, {
     routePrefix: '/docs',
-    logLevel: 'info',
+    logLevel: 'silent',
   })
 
   // Register routes
