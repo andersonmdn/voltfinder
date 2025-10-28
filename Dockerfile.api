@@ -1,0 +1,71 @@
+FROM node:20-alpine AS base
+
+# Instalar dependências necessárias
+RUN apk add --no-cache openssl
+
+# Ativa o pnpm via Corepack
+RUN corepack enable && corepack prepare pnpm@8.10.0 --activate
+
+# Criar usuário não-root
+RUN addgroup -g 1001 -S nodejs && adduser -S nodeapp -u 1001 -G nodejs
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos de configuração do workspace
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copiar os packages
+COPY packages/ ./packages/
+
+# Copiar a aplicação API
+COPY apps/api/ ./apps/api/
+
+# Instalar dependências
+RUN pnpm install --frozen-lockfile
+
+# Build dos packages primeiro
+RUN pnpm --filter @voltfinder/validations build
+RUN pnpm --filter @voltfinder/core build
+
+# Generate Prisma Client
+RUN pnpm --filter @voltfinder/api db:generate
+
+# ===== DEVELOPMENT STAGE =====
+FROM base AS development
+
+# Mudar propriedade dos arquivos para o usuário não-root
+RUN chown -R nodeapp:nodejs /app
+
+# Mudar para usuário não-root
+USER nodeapp
+
+# Expor porta
+EXPOSE 3000
+
+# Definir diretório de trabalho da API
+WORKDIR /app/apps/api
+
+# Comando para desenvolvimento (com hot reload)
+CMD ["pnpm", "dev"]
+
+# ===== PRODUCTION STAGE =====
+FROM base AS production
+
+# Build da API
+RUN pnpm --filter @voltfinder/api build
+
+# Mudar propriedade dos arquivos para o usuário não-root
+RUN chown -R nodeapp:nodejs /app
+
+# Mudar para usuário não-root
+USER nodeapp
+
+# Expor porta
+EXPOSE 3000
+
+# Definir diretório de trabalho da API
+WORKDIR /app/apps/api
+
+# Comando para produção
+CMD ["pnpm", "start"]

@@ -1,0 +1,22 @@
+{
+  "name": "@voltfinder/validations",
+  "version": "1.0.0",
+  "description": "Zod validation schemas for VoltFinder",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.1.3"
+  }
+}

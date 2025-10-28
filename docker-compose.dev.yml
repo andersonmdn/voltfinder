@@ -1,0 +1,17 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: development
+    volumes:
+      - ./apps/api/src:/app/apps/api/src
+      - ./packages:/app/packages
+    environment:
+      NODE_ENV: development
+    command: pnpm dev
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy

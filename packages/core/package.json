@@ -1,0 +1,22 @@
+{
+  "name": "@voltfinder/core",
+  "version": "1.0.0",
+  "description": "Core utilities and types for VoltFinder",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@voltfinder/validations": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.1.3"
+  }
+}

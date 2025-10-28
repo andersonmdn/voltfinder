@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: voltfinder-postgres
+    environment:
+      POSTGRES_DB: voltfinder
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sql
+      POSTGRES_INITDB_ARGS: '--locale=C.UTF-8 --encoding=UTF8'
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - voltfinder-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d voltfinder']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: production
+    container_name: voltfinder-api
+    environment:
+      DATABASE_URL: 'postgresql://postgres:sql@postgres:5432/voltfinder?schema=public'
+      NODE_ENV: 'production'
+      PORT: '3000'
+      HOST: '0.0.0.0'
+      JWT_SECRET: 'your-jwt-secret-change-in-production'
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    networks:
+      - voltfinder-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrator
+    working_dir: /repo/apps/api
+    volumes:
+      - .:/repo
+      - node_modules:/repo/node_modules
+      - api_node_modules:/repo/apps/api/node_modules
+      # cache do store do pnpm (persiste entre execuções)
+      - pnpm_store:/home/node/.pnpm-store
+    environment:
+      DATABASE_URL: 'postgresql://postgres:sql@postgres:5432/voltfinder?schema=public'
+      PNPM_YES: 'true'
+      CI: 'true'
+      PNPM_FETCH_RETRIES: '5'
+      PNPM_FETCH_RETRY_FACTOR: '2'
+      PNPM_FETCH_RETRY_MINTIMEOUT: '10000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - voltfinder-network
+    command: >
+      sh -c "
+        chown -R node:node /repo/node_modules /repo/apps/api/node_modules /home/node/.pnpm-store &&
+        su node -c 'pnpm -v &&
+        pnpm config set store-dir /home/node/.pnpm-store &&
+        pnpm install --force --prefer-offline &&
+        pnpm prisma generate &&
+        pnpm prisma migrate deploy &&
+        pnpm prisma db seed || true'
+      "
+    restart: 'no'
+
+volumes:
+  postgres_data:
+    driver: local
+  pnpm_store:
+  node_modules:
+  api_node_modules:
+
+networks:
+  voltfinder-network:
+    driver: bridge

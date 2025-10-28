@@ -1,0 +1,86 @@
+:root {
+  color-scheme: dark;
+  background: #0f1115 !important;
+}
+
+/* texto global em branco */
+.swagger-ui {
+  background: #0f1115 !important;
+  color: #e6e6e6;
+}
+
+.swagger-ui * {
+  color: #e6e6e6 !important;
+}
+
+.swagger-ui .opblock .opblock-section-header {
+  background: #141518ff !important;
+}
+
+.swagger-ui .dialog-ux .modal-ux {
+  background: #141518ff !important;
+}
+
+/* links com leve contraste */
+.swagger-ui a {
+  color: #9ecbff !important;
+}
+
+/* títulos */
+.swagger-ui h1,
+.swagger-ui h2,
+.swagger-ui h3,
+.swagger-ui h4,
+.swagger-ui h5,
+.swagger-ui h6,
+.swagger-ui .info .title {
+  color: #ffffff !important;
+}
+
+/* tabelas/parametros/respostas */
+.swagger-ui table thead th,
+.swagger-ui table tbody td,
+.swagger-ui .parameters,
+.swagger-ui .responses-wrapper,
+.swagger-ui .response-col_description,
+.swagger-ui .model,
+.swagger-ui .prop-format,
+.swagger-ui .prop-type,
+.swagger-ui .parameter__name,
+.swagger-ui .parameter__type {
+  color: #ffffff !important;
+}
+
+/* código/blocks */
+.swagger-ui pre,
+.swagger-ui code {
+  color: #ffffff !important;
+  background: #111317 !important;
+}
+
+/* inputs em dark + texto branco */
+.swagger-ui input,
+.swagger-ui select,
+.swagger-ui textarea {
+  color: #ffffff !important;
+  background: #1b1f2a !important;
+  border-color: #2a2f3a !important;
+}
+.swagger-ui input::placeholder,
+.swagger-ui textarea::placeholder {
+  color: #cbd5e1 !important;
+}
+
+/* ícones (alguns são SVG) */
+.swagger-ui svg {
+  fill: #ffffff;
+  stroke: #ffffff;
+}
+
+/* blocos das operações continuam dark, só garantindo contraste do texto */
+.swagger-ui .opblock,
+.swagger-ui .scheme-container,
+.swagger-ui .models {
+  background: #0f1115 !important;
+  border-color: #2a2f3a !important;
+}
