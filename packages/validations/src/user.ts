@@ -1,42 +1,51 @@
 import { z } from 'zod/v4'
+import { standardResponsePaginationSchema, standardResponseSchema } from './common'
 
 // User schemas
-export const userSchema = z.object({
-  id: z.number().int().positive(),
-  email: z.string().email(),
-  name: z.string().min(1),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-})
+export const userSchema = z
+  .object({
+    id: z.number().int().positive().describe('The unique identifier of the user.'),
+    email: z.string().email().describe('The email address of the user.'),
+    name: z.string().min(1).describe('The name of the user.'),
+    password: z.string().min(6).describe('The password of the user.'),
+    createdAt: z.date().describe('The date and time when the user was created.'),
+    updatedAt: z.date().describe('The date and time when the user was last updated.'),
+  })
+  .describe('Schema representing a user.')
 
-export const createUserSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(1),
-  password: z.string().min(6),
-})
+export const createUserSchema = userSchema
+  .pick({
+    email: true,
+    name: true,
+    password: true,
+  })
+  .describe('Schema for creating a new user.')
 
 // Response schemas for API documentation
-export const userResponseSchema = z.object({
-  id: z.number(),
-  email: z.string(),
-  name: z.string(),
-})
+export const userResponseSchema = userSchema
+  .pick({
+    id: true,
+    email: true,
+    name: true,
+  })
+  .describe('Schema representing a user response.')
 
-export const userDetailResponseSchema = z.object({
-  success: z.boolean(),
-  data: userResponseSchema,
-})
+export const userDetailResponseSchema = standardResponseSchema
+  .pick({
+    success: true,
+  })
+  .extend({
+    data: userResponseSchema,
+  })
+  .describe('Schema for user detail response.')
 
-export const userListResponseSchema = z.object({
-  success: z.boolean(),
-  data: z.array(userResponseSchema),
-  pagination: z.object({
-    page: z.number(),
-    limit: z.number(),
-    total: z.number(),
-    totalPages: z.number(),
-  }),
-})
+export const userListResponseSchema = z
+  .object({
+    success: z.boolean().describe('Indicates if the request was successful.'),
+    data: z.array(userResponseSchema),
+    pagination: standardResponsePaginationSchema,
+  })
+  .describe('Schema for user list response.')
 
 // Export types
 export type User = z.infer<typeof userSchema>

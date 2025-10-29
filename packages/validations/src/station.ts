@@ -2,14 +2,16 @@ import { z } from 'zod/v4'
 import { standardResponseSchema } from './common'
 
 // Station schemas
-export const stationSchema = z.object({
-  id: z.number().int().positive(),
-  name: z.string().min(1).max(255),
-  latitude: z.number().min(-90).max(90),
-  longitude: z.number().min(-180).max(180),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-})
+const stationSchema = z
+  .object({
+    id: z.number().int().positive().describe('The unique identifier of the station.'),
+    name: z.string().min(1).max(255).describe('The name of the charging station.'),
+    latitude: z.number().min(-90).max(90).describe('The latitude coordinate of the station.'),
+    longitude: z.number().min(-180).max(180).describe('The longitude coordinate of the station.'),
+    createdAt: z.date().describe('The date and time when the station was created.'),
+    updatedAt: z.date().describe('The date and time when the station was last updated.'),
+  })
+  .describe('Schema representing a charging station.')
 
 export const createStationSchema = stationSchema
   .pick({
@@ -18,6 +20,7 @@ export const createStationSchema = stationSchema
     longitude: true,
   })
   .strict()
+  .describe('Schema for creating a new charging station.')
 
 export const updateStationSchema = stationSchema
   .pick({
@@ -27,6 +30,7 @@ export const updateStationSchema = stationSchema
   })
   .partial()
   .strict()
+  .describe('Schema for updating an existing charging station.')
 
 export const nearbyStationsQuerySchema = stationSchema
   .pick({
@@ -34,19 +38,22 @@ export const nearbyStationsQuerySchema = stationSchema
     longitude: true,
   })
   .extend({
-    radius: z.number().positive().max(1000).default(10),
-    limit: z.number().int().positive().max(100).default(20),
+    radius: z.number().positive().max(1000).default(10).describe('Search radius in kilometers (maximum 1000).'),
+    limit: z.number().int().positive().max(100).default(20).describe('Maximum number of stations to return (maximum 100).'),
   })
+  .describe('Schema for querying nearby charging stations.')
 
 // Station response schemas
-export const stationResponseSchema = stationSchema.pick({
-  id: true,
-  name: true,
-  latitude: true,
-  longitude: true,
-  createdAt: true,
-  updatedAt: true,
-})
+export const stationResponseSchema = stationSchema
+  .pick({
+    id: true,
+    name: true,
+    latitude: true,
+    longitude: true,
+    createdAt: true,
+    updatedAt: true,
+  })
+  .describe('Schema representing a station response.')
 
 export const stationSuccessResponseSchema = standardResponseSchema
   .pick({
@@ -56,6 +63,7 @@ export const stationSuccessResponseSchema = standardResponseSchema
   .extend({
     data: stationResponseSchema,
   })
+  .describe('Schema for successful station operation response.')
 
 export const stationListResponseSchema = standardResponseSchema
   .pick({
@@ -64,16 +72,19 @@ export const stationListResponseSchema = standardResponseSchema
   .extend({
     data: z.array(stationResponseSchema),
     pagination: z.object({
-      page: z.number(),
-      limit: z.number(),
-      total: z.number(),
-      totalPages: z.number(),
+      page: z.number().describe('Current page number.'),
+      limit: z.number().describe('Number of items per page.'),
+      total: z.number().describe('Total number of items.'),
+      totalPages: z.number().describe('Total number of pages.'),
     }),
   })
+  .describe('Schema for station list response.')
 
-const stationWithDistanceResponseSchema = stationResponseSchema.extend({
-  distance: z.number(),
-})
+const stationWithDistanceResponseSchema = stationResponseSchema
+  .extend({
+    distance: z.number().describe('Distance from the query point in kilometers.'),
+  })
+  .describe('Schema representing a station with distance information.')
 
 export const nearbyStationsResponseSchema = standardResponseSchema
   .pick({
@@ -83,6 +94,7 @@ export const nearbyStationsResponseSchema = standardResponseSchema
   .extend({
     data: z.array(stationWithDistanceResponseSchema),
   })
+  .describe('Schema for nearby stations response.')
 
 // Export types
 export type Station = z.infer<typeof stationSchema>

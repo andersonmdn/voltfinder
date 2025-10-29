@@ -79,7 +79,7 @@ export const buildApp = async () => {
 
   await app.register(swaggerUI, {
     routePrefix: '/docs',
-    logLevel: 'silent',
+    logLevel: 'debug',
   })
 
   // Register routes

@@ -30,6 +30,7 @@ export async function userRoutes(app: FastifyInstance) {
         response: {
           200: userDetailResponseSchema,
           401: standardErrorSchema,
+          404: standardErrorSchema,
           500: standardErrorSchema,
         },
       },
@@ -96,12 +97,11 @@ export async function userRoutes(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
+      const { id } = idParamSchema.parse(request.params)
+
       try {
         const userService = (app as any).userService
-        const { id } = request.params
-
         const user = await userService.getUserById(id)
-
         return {
           success: true,
           data: {
@@ -119,7 +119,6 @@ export async function userRoutes(app: FastifyInstance) {
             message: 'The requested user does not exist',
           }
         }
-
         reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         return {
           success: false,

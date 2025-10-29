@@ -117,7 +117,7 @@ export async function authRoutes(app: FastifyInstance) {
         tags: ['Authentication'],
         summary: 'Refresh access token',
         description: 'Get a new access token using a valid refresh token',
-        body: refreshTokenSchema.describe('Schema for refreshing access token using refresh token. aaaaaaaaaaaaaaaa'),
+        body: refreshTokenSchema,
         response: {
           200: authRefreshSuccessSchema,
           400: standardErrorSchema,
