@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client'
 import { LoginSchema, RegisterSchema, type LoginBody, type RegisterBody } from '@voltfinder/validations'
 import bcrypt from 'bcryptjs'
+import type { SignAccessToken, SignRefreshToken, VerifyRefreshToken } from '../types'
 
 // Tipagem leve para detectar erros conhecidos do Prisma sem importar runtime pesado
 interface PrismaError extends Error {
@@ -10,9 +11,9 @@ interface PrismaError extends Error {
 export class AuthService {
   constructor(
     private prisma: PrismaClient,
-    private signAccess: (payload: any) => string,
-    private signRefresh: (payload: any) => string,
-    private verifyRefresh: (token: string) => any
+    private signAccess: SignAccessToken,
+    private signRefresh: SignRefreshToken,
+    private verifyRefresh: VerifyRefreshToken
   ) {}
 
   async register(data: RegisterBody) {
@@ -82,10 +83,10 @@ export class AuthService {
   async refresh(refreshToken: string) {
     try {
       const payload = this.verifyRefresh(refreshToken)
-      if (!payload || typeof payload !== 'object' || typeof (payload as any).userId !== 'number') {
+      if (!payload || typeof payload.userId !== 'number') {
         throw new Error('INVALID_REFRESH')
       }
-      const user = await this.prisma.user.findUnique({ where: { id: (payload as any).userId } })
+      const user = await this.prisma.user.findUnique({ where: { id: payload.userId } })
       if (!user) throw new Error('INVALID_REFRESH')
 
       const token = this.signAccess({ userId: user.id })
@@ -114,9 +115,9 @@ export class AuthService {
 
 export function createAuthService(
   prisma: PrismaClient,
-  signAccess: (payload: any) => string,
-  signRefresh: (payload: any) => string,
-  verifyRefresh: (token: string) => any
+  signAccess: SignAccessToken,
+  signRefresh: SignRefreshToken,
+  verifyRefresh: VerifyRefreshToken
 ) {
   return new AuthService(prisma, signAccess, signRefresh, verifyRefresh)
 }

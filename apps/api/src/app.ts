@@ -8,6 +8,7 @@ import { authRoutes } from './routes/auth'
 import { stationRoutes } from './routes/stations'
 import { userRoutes } from './routes/users'
 import { createServices } from './services'
+import type { JWTAccessPayload, JWTRefreshPayload, JWTVerifiedPayload } from './types'
 
 export const buildApp = async () => {
   const app = fastify({
@@ -42,18 +43,21 @@ export const buildApp = async () => {
   })
 
   // Create JWT helper functions
-  const signAccess = (payload: any) => app.jwt.sign(payload, { expiresIn: '1h' })
-  const signRefresh = (payload: any) => app.jwt.sign(payload, { expiresIn: '7d' })
-  const verifyRefresh = (token: string) => app.jwt.verify(token)
+  const signAccess = (payload: JWTAccessPayload): string => app.jwt.sign(payload, { expiresIn: '1h' })
+  const signRefresh = (payload: JWTRefreshPayload): string => app.jwt.sign(payload, { expiresIn: '7d' })
+  const verifyRefresh = (token: string): JWTVerifiedPayload => {
+    const verified = app.jwt.verify(token)
+    return verified as JWTVerifiedPayload
+  }
 
   // Initialize services
   const services = createServices(signAccess, signRefresh, verifyRefresh)
 
-  // Attach services to app instance for route access
-  ;(app as any).authService = services.authService
-  ;(app as any).stationService = services.stationService
-  ;(app as any).userService = services.userService
-  ;(app as any).prisma = services.prisma
+  // Decorate app with services using Fastify decorators
+  app.decorate('authService', services.authService)
+  app.decorate('stationService', services.stationService)
+  app.decorate('userService', services.userService)
+  app.decorate('prisma', services.prisma)
 
   // Register swagger first without any configuration issues
   await app.register(swagger, {
@@ -80,6 +84,51 @@ export const buildApp = async () => {
   await app.register(swaggerUI, {
     routePrefix: '/docs',
     logLevel: 'debug',
+  })
+
+  // Global error handler
+  app.setErrorHandler((error, request, reply) => {
+    app.log.error(error)
+
+    if (error.code === 'FST_ERR_VALIDATION') {
+      return reply.status(400).send({
+        success: false,
+        error: 'Validation Error',
+        message: error.message,
+      })
+    }
+
+    if (error.code === 'FST_ERR_CTP_INVALID_JSON_BODY') {
+      return reply.status(400).send({
+        success: false,
+        error: 'Invalid JSON body',
+        message: error.message,
+      })
+    }
+
+    if (error.code === 'FST_ERR_RESPONSE_SERIALIZATION') {
+      app.log.error('Response serialization error')
+      return reply.status(500).send({
+        success: false,
+        error: 'Response Serialization Error',
+        message: 'Failed to serialize response',
+      })
+    }
+
+    if (error instanceof Error) {
+      app.log.error('====== NEW ERROR DETAILS ======')
+      app.log.error(`Error name: ${error.name}`)
+      app.log.error(`Error message: ${error.message}`)
+      app.log.error(`Error stack: ${error.stack}`)
+      app.log.error(`Error code: ${error.code}`)
+      app.log.error('====== END ERROR DETAILS ======')
+    }
+
+    return reply.status(500).send({
+      success: false,
+      error: 'Internal Server Error',
+      message: 'Something went wrong',
+    })
   })
 
   // Register routes

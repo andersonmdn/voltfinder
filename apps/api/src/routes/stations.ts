@@ -21,42 +21,48 @@ export async function stationRoutes(app: FastifyInstance) {
   server.post(
     '/',
     {
+      preHandler: async (request, reply) => {
+        try {
+          await request.jwtVerify()
+        } catch (err) {
+          reply.code(HTTP_STATUS.UNAUTHORIZED).send({
+            success: false,
+            error: 'Unauthorized',
+            message: 'Valid authentication token required',
+          })
+        }
+      },
       schema: {
         tags: ['Stations'],
         summary: 'Create a new station',
         description: 'Create a new charging station with name and coordinates',
+        security: [{ Bearer: [] }],
         body: createStationSchema,
         response: {
           201: stationSuccessResponseSchema,
           400: standardErrorSchema,
+          401: standardErrorSchema,
           500: standardErrorSchema,
         },
       },
     },
     async (request, reply) => {
       try {
-        const stationService = (app as any).stationService
-        const station = await stationService.create(request.body)
+        const station = await app.stationService.create(request.body)
 
-        reply.code(HTTP_STATUS.CREATED)
-        return {
+        reply.code(HTTP_STATUS.CREATED).send({
           success: true,
-          data: {
-            ...station,
-            createdAt: station.createdAt.toISOString(),
-            updatedAt: station.updatedAt.toISOString(),
-          },
+          data: station,
           message: 'Station created successfully',
-        }
-      } catch (error: any) {
-        app.log.error('Error creating station:', error)
+        })
+      } catch (error) {
+        app.log.error({ error }, 'Error creating station')
 
-        reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        return {
+        reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
           success: false,
           error: 'Internal server error',
           message: 'Something went wrong while creating the station',
-        }
+        })
       }
     }
   )
@@ -78,21 +84,16 @@ export async function stationRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const stationService = (app as any).stationService
-        const { page, limit } = request.query as any
-        const result = await stationService.findAll(page, limit)
+        const { page, limit } = request.query
+        const result = await app.stationService.findAll(page, limit)
 
         return {
           success: true,
-          data: result.stations.map((station: any) => ({
-            ...station,
-            createdAt: station.createdAt.toISOString(),
-            updatedAt: station.updatedAt.toISOString(),
-          })),
+          data: result.stations,
           pagination: result.pagination,
         }
-      } catch (error: any) {
-        app.log.error('Error fetching stations:', error)
+      } catch (error) {
+        app.log.error({ error }, 'Error fetching stations')
 
         reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         return {
@@ -122,20 +123,15 @@ export async function stationRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const stationService = (app as any).stationService
-        const { id } = request.params as any
-        const station = await stationService.findById(id)
+        const { id } = request.params
+        const station = await app.stationService.findById(id)
 
         return {
           success: true,
-          data: {
-            ...station,
-            createdAt: station.createdAt.toISOString(),
-            updatedAt: station.updatedAt.toISOString(),
-          },
+          data: station,
         }
-      } catch (error: any) {
-        if (error.message === 'STATION_NOT_FOUND') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'STATION_NOT_FOUND') {
           reply.code(HTTP_STATUS.NOT_FOUND)
           return {
             success: false,
@@ -144,7 +140,7 @@ export async function stationRoutes(app: FastifyInstance) {
           }
         }
 
-        app.log.error('Error fetching station:', error)
+        app.log.error({ error }, 'Error fetching station')
         reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         return {
           success: false,
@@ -174,21 +170,16 @@ export async function stationRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const stationService = (app as any).stationService
-        const { id } = request.params as any
-        const station = await stationService.update(id, request.body)
+        const { id } = request.params
+        const station = await app.stationService.update(id, request.body)
 
         return {
           success: true,
-          data: {
-            ...station,
-            createdAt: station.createdAt.toISOString(),
-            updatedAt: station.updatedAt.toISOString(),
-          },
+          data: station,
           message: 'Station updated successfully',
         }
-      } catch (error: any) {
-        if (error.message === 'STATION_NOT_FOUND') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'STATION_NOT_FOUND') {
           reply.code(HTTP_STATUS.NOT_FOUND)
           return {
             success: false,
@@ -197,7 +188,7 @@ export async function stationRoutes(app: FastifyInstance) {
           }
         }
 
-        app.log.error('Error updating station:', error)
+        app.log.error({ error }, 'Error updating station')
         reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         return {
           success: false,
@@ -226,16 +217,15 @@ export async function stationRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const stationService = (app as any).stationService
-        const { id } = request.params as any
-        await stationService.delete(id)
+        const { id } = request.params
+        await app.stationService.delete(id)
 
         return {
           success: true,
           message: 'Station deleted successfully',
         }
-      } catch (error: any) {
-        if (error.message === 'STATION_NOT_FOUND') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'STATION_NOT_FOUND') {
           reply.code(HTTP_STATUS.NOT_FOUND)
           return {
             success: false,
@@ -244,7 +234,7 @@ export async function stationRoutes(app: FastifyInstance) {
           }
         }
 
-        app.log.error('Error deleting station:', error)
+        app.log.error({ error }, 'Error deleting station')
         reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         return {
           success: false,
@@ -273,21 +263,16 @@ export async function stationRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const stationService = (app as any).stationService
-        const query = request.query as any
-        const stations = await stationService.findNearby(query)
+        const query = request.query
+        const stations = await app.stationService.findNearby(query)
 
         return {
           success: true,
-          data: stations.map((station: any) => ({
-            ...station,
-            createdAt: station.createdAt.toISOString(),
-            updatedAt: station.updatedAt.toISOString(),
-          })),
+          data: stations,
           message: `Found ${stations.length} stations within ${query.radius}km`,
         }
-      } catch (error: any) {
-        app.log.error('Error finding nearby stations:', error)
+      } catch (error) {
+        app.log.error({ error }, 'Error finding nearby stations')
 
         reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
         return {

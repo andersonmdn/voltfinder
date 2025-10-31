@@ -37,8 +37,7 @@ export async function userRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const authService = (app as any).authService
-        const userId = (request.user as any)?.userId
+        const userId = request.user?.userId
 
         if (!userId) {
           reply.code(HTTP_STATUS.UNAUTHORIZED)
@@ -49,18 +48,14 @@ export async function userRoutes(app: FastifyInstance) {
           }
         }
 
-        const user = await authService.getUserById(userId)
+        const user = await app.authService.getUserById(userId)
 
         return {
           success: true,
-          data: {
-            ...user,
-            createdAt: user.createdAt.toISOString(),
-            updatedAt: user.updatedAt.toISOString(),
-          },
+          data: user,
         }
-      } catch (error: any) {
-        if (error.message === 'USER_NOT_FOUND') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
           reply.code(HTTP_STATUS.NOT_FOUND)
           return {
             success: false,
@@ -100,18 +95,13 @@ export async function userRoutes(app: FastifyInstance) {
       const { id } = idParamSchema.parse(request.params)
 
       try {
-        const userService = (app as any).userService
-        const user = await userService.getUserById(id)
+        const user = await app.userService.getUserById(id)
         return {
           success: true,
-          data: {
-            ...user,
-            createdAt: user.createdAt.toISOString(),
-            updatedAt: user.updatedAt.toISOString(),
-          },
+          data: user,
         }
-      } catch (error: any) {
-        if (error.message === 'USER_NOT_FOUND') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'USER_NOT_FOUND') {
           reply.code(HTTP_STATUS.NOT_FOUND)
           return {
             success: false,
@@ -147,18 +137,13 @@ export async function userRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const userService = (app as any).userService
         const { page, limit } = request.query
 
-        const result = await userService.getUsersList(page, limit)
+        const result = await app.userService.getUsersList(page, limit)
 
         return {
           success: true,
-          data: result.users.map((user: any) => ({
-            ...user,
-            createdAt: user.createdAt.toISOString(),
-            updatedAt: user.updatedAt.toISOString(),
-          })),
+          data: result.users,
           pagination: result.pagination,
         }
       } catch (error) {

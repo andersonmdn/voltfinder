@@ -33,8 +33,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const authService = (app as any).authService
-        const result = await authService.register(request.body)
+        const result = await app.authService.register(request.body)
 
         reply.code(HTTP_STATUS.CREATED)
         return {
@@ -42,8 +41,8 @@ export async function authRoutes(app: FastifyInstance) {
           data: result.user,
           message: 'User created successfully',
         }
-      } catch (error: any) {
-        if (error.message === 'EMAIL_IN_USE') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'EMAIL_IN_USE') {
           reply.code(HTTP_STATUS.CONFLICT)
           return {
             success: false,
@@ -52,12 +51,11 @@ export async function authRoutes(app: FastifyInstance) {
           }
         }
 
-        reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR)
-        return {
+        reply.code(HTTP_STATUS.INTERNAL_SERVER_ERROR).send({
           success: false,
           error: 'Internal server error',
           message: 'Something went wrong while creating the user',
-        }
+        })
       }
     }
   )
@@ -81,16 +79,15 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const authService = (app as any).authService
-        const result = await authService.login(request.body)
+        const result = await app.authService.login(request.body)
 
         return {
           success: true,
           data: result,
           message: 'Login successful',
         }
-      } catch (error: any) {
-        if (error.message === 'INVALID_CREDENTIALS') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'INVALID_CREDENTIALS') {
           reply.code(HTTP_STATUS.UNAUTHORIZED)
           return {
             success: false,
@@ -128,16 +125,15 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       try {
-        const authService = (app as any).authService
         const { refreshToken } = request.body
-        const result = await authService.refresh(refreshToken)
+        const result = await app.authService.refresh(refreshToken)
 
         return {
           success: true,
           data: result,
         }
-      } catch (error: any) {
-        if (error.message === 'INVALID_REFRESH') {
+      } catch (error) {
+        if (error instanceof Error && error.message === 'INVALID_REFRESH') {
           reply.code(HTTP_STATUS.UNAUTHORIZED)
           return {
             success: false,

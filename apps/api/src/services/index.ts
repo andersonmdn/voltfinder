@@ -1,12 +1,12 @@
 import { PrismaClient } from '@prisma/client'
+import type { Services, SignAccessToken, SignRefreshToken, VerifyRefreshToken } from '../types'
 import { createAuthService } from './authService'
 import { createStationService } from './stationService'
 import { createUserService } from './userService'
 
 const prisma = new PrismaClient()
 
-// JWT helper functions (these would be injected from your JWT service)
-export function createServices(signAccess: (payload: any) => string, signRefresh: (payload: any) => string, verifyRefresh: (token: string) => any) {
+export function createServices(signAccess: SignAccessToken, signRefresh: SignRefreshToken, verifyRefresh: VerifyRefreshToken): Services {
   const authService = createAuthService(prisma, signAccess, signRefresh, verifyRefresh)
   const stationService = createStationService(prisma)
   const userService = createUserService(prisma)
