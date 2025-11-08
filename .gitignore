@@ -91,6 +91,3 @@ web-build/
 
 # PNPM store
 .pnpm-store/**
-
-# Temporary Exclusions
-apps/mobile/**
