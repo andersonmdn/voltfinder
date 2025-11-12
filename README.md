@@ -457,6 +457,93 @@ pnpm db:migrate     # Executar migrações
 pnpm db:studio      # Abrir Prisma Studio
 ```
 
+## 🗺️ Map Layer / Camada de Mapas
+
+O VoltFinder inclui uma camada de mapas abstrata que suporta múltiplos provedores:
+
+### Provedores Suportados
+
+1. **Leaflet (Web)** - OpenStreetMap, grátis, sem API key necessária
+2. **Google Maps (Web)** - Requer chave API, termos comerciais
+3. **React Native Maps (Mobile)** - Google no Android, Apple Maps no iOS
+
+### Configuração Rápida
+
+1. **Copie o arquivo de ambiente:**
+```bash
+cp .env.example .env
+```
+
+2. **Configure o provedor no `.env`:**
+```bash
+# Para Leaflet (padrão, grátis)
+EXPO_PUBLIC_MAP_PROVIDER=leaflet
+
+# Para Google Maps (requer API key)
+EXPO_PUBLIC_MAP_PROVIDER=google
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key_here
+
+# Para React Native Maps (mobile apenas)
+EXPO_PUBLIC_MAP_PROVIDER=rn-maps
+```
+
+3. **Execute com diferentes provedores:**
+```bash
+# Web com Leaflet
+pnpm dev:web:leaflet
+
+# Web com Google Maps
+pnpm dev:web:google
+
+# Mobile (React Native Maps)
+pnpm dev:mobile
+```
+
+### Obter Chave do Google Maps
+
+1. Acesse [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie/selecione um projeto
+3. Habilite "Maps JavaScript API"
+4. Crie uma chave API em "Credenciais"
+5. Configure restrições de domínio/IP (opcional)
+6. Adicione a chave no `.env`
+
+### Estrutura dos Packages
+
+```
+packages/
+  map-core/           # Interface comum (IMapAdapter)
+  map-leaflet-web/    # Adapter Leaflet para web
+  map-google-web/     # Adapter Google Maps para web
+```
+
+### Interface Unificada
+
+Todos os adapters implementam a mesma interface:
+
+```typescript
+interface IMapAdapter {
+  mount(container: HTMLElement | null): void;
+  unmount(): void;
+  setCamera(pos: LatLng, zoom: number): void;
+  fitBounds(nw: LatLng, se: LatLng, padding?: number): void;
+  addMarker(id: string, pos: LatLng, opts?: MarkerOptions): void;
+  removeMarker(id: string): void;
+  addPolyline(id: string, pts: LatLng[], opts?: PolylineOptions): void;
+  addPolygon(id: string, pts: LatLng[], opts?: PolygonOptions): void;
+  on(event: 'press' | 'regionChanged', cb: Function): void;
+  off(event: 'press' | 'regionChanged', cb: Function): void;
+}
+```
+
+### Considerações Legais
+
+- **OpenStreetMap (Leaflet)**: Livre, requer attribution
+- **Google Maps**: Limites de uso grátis, não cachear tiles
+- **React Native Maps**: Apple Maps (iOS) e Google (Android)
+
+⚠️ **IMPORTANTE**: Respeite os termos de uso de cada provedor.
+
 ## Estrutura de Dependências
 
 - **validations**: Independente, apenas Zod
@@ -482,6 +569,13 @@ pnpm db:studio      # Abrir Prisma Studio
 - Tamagui
 - React Hook Form
 - Expo Router
+- React Native Maps
+
+### Maps
+
+- Leaflet (OpenStreetMap)
+- Google Maps JavaScript API
+- React Native Maps (iOS/Android)
 
 ### Tooling
 

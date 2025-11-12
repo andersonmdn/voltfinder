@@ -1,0 +1,26 @@
+{
+  "name": "@voltfinder/map-leaflet-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Leaflet map adapter for web platforms",
+  "main": "src/index.tsx",
+  "types": "src/index.tsx",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@voltfinder/map-core": "workspace:*",
+    "leaflet": "^1.9.4",
+    "@turf/turf": "^7.0.0",
+    "supercluster": "^8.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.3",
+    "vitest": "^2.0.0",
+    "@types/leaflet": "^1.9.8",
+    "@types/supercluster": "^7.1.3"
+  }
+}

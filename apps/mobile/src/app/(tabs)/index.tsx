@@ -1,88 +1,111 @@
-import { Clock, MapPin, Zap } from "@tamagui/lucide-icons";
-import { ScrollView } from "react-native";
-import { Button, Card, H1, H2, Paragraph, XStack, YStack } from "tamagui";
+import { FilterSheet } from '@/components/FilterSheet'
+import { NearbySheet } from '@/components/NearbySheet'
+import { StationInfoSheet } from '@/components/StationInfoSheet'
+import EventType from '@/enums/EventType'
+import MarkerStatus from '@/enums/MarkerStatus'
+import StationInfo from '@/interfaces/StationInfo'
+import { Search, SlidersHorizontal } from '@tamagui/lucide-icons'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { View } from 'react-native'
+import { Button, Input, Text, XStack, YStack } from 'tamagui'
+import { useReactNativeMapAdapter } from '../../hooks/useReactNativeMapAdapter'
 
-export default function HomeScreen() {
+export default function MapScreen() {
+  const mapAdapter = useReactNativeMapAdapter()
+  const initialized = useRef(false)
+  const [selectedStation, setSelectedStation] = useState<StationInfo | null>(null)
+  const [openStationInfo, setOpenStationInfo] = useState(false)
+  const [openFilter, setOpenFilter] = useState(false)
+
+  // DEMO MARKERS - Buscar da API futuramente
+  const demoMarkers = useRef([
+    { id: 1, lat: -23.561199, lng: -46.658723, status: MarkerStatus.CLOSED },
+    { id: 2, lat: -23.56126, lng: -46.66052, status: MarkerStatus.FREE },
+    { id: 3, lat: -23.559424, lng: -46.658657, status: MarkerStatus.BUSY },
+    { id: 4, lat: -23.56322, lng: -46.661995, status: MarkerStatus.MAINTENANCE },
+  ])
+
+  // Memoize event handlers to prevent unnecessary re-registrations
+  const handlePinMarker = useCallback((marker: StationInfo) => {
+    console.log('[Home] Pin marker selected:', marker)
+    setSelectedStation(marker)
+    setOpenStationInfo(true)
+  }, [])
+
+  const handleRegionChanged = useCallback((event: any) => {
+    console.log('[Home] Region changed:', event)
+  }, [])
+
+  useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+
+    // Add demo markers only once
+    demoMarkers.current.forEach((marker) => {
+      mapAdapter.addMarker(marker.id, { lat: marker.lat, lng: marker.lng }, marker.status as MarkerStatus)
+    })
+
+    // Register event listeners
+    mapAdapter.on(EventType.PIN_MARKER, handlePinMarker)
+    //mapAdapter.on(EventType.REGION_CHANGED, handleRegionChanged)
+
+    return () => {
+      // Cleanup listeners properly
+      //mapAdapter.off(EventType.PIN_MARKER, handlePinMarker)
+      //mapAdapter.off(EventType.REGION_CHANGED, handleRegionChanged)
+    }
+  }, [mapAdapter, handlePinMarker, handleRegionChanged])
+
+  const handleCenterToSF = useCallback(() => {
+    mapAdapter.setCamera({ lat: -23.5605805, lng: -46.661941 }, 13)
+  }, [mapAdapter])
+
+  const handleFitBounds = useCallback(() => {
+    // Ir para todos os marcadores de demonstração
+    mapAdapter.fitBounds({ lat: -23.561199, lng: -46.658723 }, { lat: -23.56322, lng: -46.661995 }, 100)
+  }, [mapAdapter])
+
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: "$background" }}>
-      <YStack padding="$4" space="$4">
-        <YStack space="$2">
-          <H1 color="$color">VoltFinder</H1>
-          <Paragraph color="$gray10">
-            Find electric vehicle charging stations near you
-          </Paragraph>
-        </YStack>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <YStack flex={1} mt="$4">
+        <XStack
+          padding="$3"
+          backgroundColor="$background"
+          alignItems="center"
+          borderBottomWidth={1}
+          borderBottomColor="$borderColor"
+          justifyContent="space-between"
+        >
+          <XStack alignItems="center" justifyContent="flex-start" width="65%">
+            <Search color="$color"></Search>
+            <Input placeholder="Pesquisar" borderWidth={0} minWidth={200} />
+          </XStack>
 
-        <Card elevate size="$4" bordered>
-          <Card.Header padded>
-            <H2 color="$color">Quick Search</H2>
-          </Card.Header>
-          <Card.Footer padded>
-            <XStack space="$2" flex={1}>
-              <Button flex={1} theme="blue" icon={MapPin}>
-                Near Me
-              </Button>
-              <Button flex={1} theme="green" icon={Zap}>
-                Fast Charging
-              </Button>
-            </XStack>
-          </Card.Footer>
-        </Card>
+          <Button transparent onPress={() => setOpenFilter(true)}>
+            <SlidersHorizontal color="$color" />
+            <Text>Filtrar</Text>
+          </Button>
+        </XStack>
 
-        <YStack space="$3">
-          <H2 color="$color">Recent Stations</H2>
+        {/* Map container */}
+        <View style={{ flex: 1 }}>
+          <mapAdapter.MapComponent />
+        </View>
 
-          <Card elevate size="$3" bordered>
-            <Card.Header padded>
-              <XStack justifyContent="space-between" alignItems="center">
-                <YStack>
-                  <H2 size="$5" color="$color">
-                    Tesla Supercharger
-                  </H2>
-                  <Paragraph color="$gray10">Downtown Mall</Paragraph>
-                </YStack>
-                <YStack alignItems="flex-end">
-                  <XStack alignItems="center" space="$1">
-                    <Zap size={16} color="$green10" />
-                    <Paragraph color="$green10">Available</Paragraph>
-                  </XStack>
-                  <XStack alignItems="center" space="$1">
-                    <Clock size={14} color="$gray10" />
-                    <Paragraph color="$gray10" size="$2">
-                      2 min ago
-                    </Paragraph>
-                  </XStack>
-                </YStack>
-              </XStack>
-            </Card.Header>
-          </Card>
+        <StationInfoSheet open={openStationInfo} setOpen={setOpenStationInfo} station={selectedStation || ({} as StationInfo)} />
+        <FilterSheet open={openFilter} setOpen={setOpenFilter} />
+        <NearbySheet />
 
-          <Card elevate size="$3" bordered>
-            <Card.Header padded>
-              <XStack justifyContent="space-between" alignItems="center">
-                <YStack>
-                  <H2 size="$5" color="$color">
-                    ChargePoint Station
-                  </H2>
-                  <Paragraph color="$gray10">City Center</Paragraph>
-                </YStack>
-                <YStack alignItems="flex-end">
-                  <XStack alignItems="center" space="$1">
-                    <Zap size={16} color="$orange10" />
-                    <Paragraph color="$orange10">Busy</Paragraph>
-                  </XStack>
-                  <XStack alignItems="center" space="$1">
-                    <Clock size={14} color="$gray10" />
-                    <Paragraph color="$gray10" size="$2">
-                      5 min ago
-                    </Paragraph>
-                  </XStack>
-                </YStack>
-              </XStack>
-            </Card.Header>
-          </Card>
-        </YStack>
+        {/* Controls */}
+        <XStack padding="$4" justifyContent="center" mb={50}>
+          <Button onPress={handleCenterToSF} size="$3">
+            Centralizar em SP
+          </Button>
+          <Button onPress={handleFitBounds} size="$3">
+            Ir para marcadores
+          </Button>
+        </XStack>
       </YStack>
-    </ScrollView>
-  );
+    </View>
+  )
 }

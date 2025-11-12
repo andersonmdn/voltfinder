@@ -15,6 +15,9 @@ export default {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.voltfinder.mobile",
+    infoPlist: {
+      NSLocationWhenInUseUsageDescription: "App usa sua localização para mostrar estações de carregamento próximas."
+    }
   },
   android: {
     adaptiveIcon: {
@@ -22,6 +25,10 @@ export default {
       backgroundColor: "#ffffff",
     },
     package: "com.voltfinder.mobile",
+    permissions: [
+      "ACCESS_FINE_LOCATION",
+      "ACCESS_COARSE_LOCATION"
+    ]
   },
   web: {
     favicon: "./assets/favicon.png",
