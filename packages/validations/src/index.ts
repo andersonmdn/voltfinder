@@ -9,5 +9,8 @@ export * from './auth'
 // Re-export everything from station module
 export * from './station'
 
+// Re-export everything from chargePoint module
+export * from './chargePoint'
+
 // Re-export everything from common module
 export * from './common'

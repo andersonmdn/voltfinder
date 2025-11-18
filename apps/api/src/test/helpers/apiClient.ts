@@ -32,12 +32,16 @@ export class ApiClient {
     const fetchOptions: RequestInit = {
       method,
       headers: {
-        'Content-Type': 'application/json',
         ...headers,
       },
     }
 
+    // Only set Content-Type for requests that have a payload
     if (payload && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+      fetchOptions.headers = {
+        'Content-Type': 'application/json',
+        ...headers,
+      }
       fetchOptions.body = JSON.stringify(payload)
     }
 
@@ -62,11 +66,13 @@ export class ApiClient {
   }
 
   async post(url: string, payload?: any, headers?: Record<string, string>) {
-    return this.request({ method: 'POST', url, payload, headers })
+    const requestHeaders = payload ? { 'Content-Type': 'application/json', ...headers } : headers
+    return this.request({ method: 'POST', url, payload, headers: requestHeaders })
   }
 
   async put(url: string, payload?: any, headers?: Record<string, string>) {
-    return this.request({ method: 'PUT', url, payload, headers })
+    const requestHeaders = payload ? { 'Content-Type': 'application/json', ...headers } : headers
+    return this.request({ method: 'PUT', url, payload, headers: requestHeaders })
   }
 
   async delete(url: string, headers?: Record<string, string>) {
@@ -74,7 +80,8 @@ export class ApiClient {
   }
 
   async patch(url: string, payload?: any, headers?: Record<string, string>) {
-    return this.request({ method: 'PATCH', url, payload, headers })
+    const requestHeaders = payload ? { 'Content-Type': 'application/json', ...headers } : headers
+    return this.request({ method: 'PATCH', url, payload, headers: requestHeaders })
   }
 }
 

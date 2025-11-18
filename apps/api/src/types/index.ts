@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client'
 import type { FastifyInstance } from 'fastify'
 import type { AuthService } from '../services/authService'
+import type { ChargePointService } from '../services/chargePointService'
 import type { StationService } from '../services/stationService'
 import type { UserService } from '../services/userService'
 
@@ -27,6 +28,7 @@ export type VerifyRefreshToken = (token: string) => JWTVerifiedPayload
 // Services container
 export interface Services {
   authService: AuthService
+  chargePointService: ChargePointService
   stationService: StationService
   userService: UserService
   prisma: PrismaClient
@@ -44,6 +46,7 @@ declare module '@fastify/jwt' {
 declare module 'fastify' {
   interface FastifyInstance {
     authService: AuthService
+    chargePointService: ChargePointService
     stationService: StationService
     userService: UserService
     prisma: PrismaClient

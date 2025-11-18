@@ -9,6 +9,7 @@ import {
   standardErrorSchema,
   stationListResponseSchema,
   stationSuccessResponseSchema,
+  stationSuccessResponseSchemaWithChargePoints,
   updateStationSchema,
 } from '@voltfinder/validations'
 import type { FastifyInstance } from 'fastify'
@@ -115,7 +116,7 @@ export async function stationRoutes(app: FastifyInstance) {
         description: 'Retrieve a specific charging station by its ID',
         params: idParamSchema,
         response: {
-          200: stationSuccessResponseSchema,
+          200: stationSuccessResponseSchemaWithChargePoints,
           404: standardErrorSchema,
           500: standardErrorSchema,
         },

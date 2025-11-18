@@ -21,14 +21,61 @@ model User {
   @@map("users")
 }
 
+enum StationStatus {
+  BUSY
+  FREE
+  CLOSED
+  MAINTENANCE
+
+  @@map("station_status")
+}
+
 model Station {
   id        Int      @id @default(autoincrement())
   name      String
   latitude  Float
   longitude Float
+  address   String   @default("")
+  workingHours String @default("24/7")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  chargePoints ChargePoint[]
+
   @@map("stations")
   @@index([latitude, longitude], name: "idx_latitude_longitude")
+}
+
+enum ChargePointStatus {
+  BUSY
+  FREE
+  CLOSED
+  MAINTENANCE
+
+  @@map("charge_point_status")
+}
+
+enum ChargePointType {
+  TYPE1
+  TYPE2
+  CCS
+  CHAdeMO
+  TESLA_SUPERCHARGER
+
+  @@map("charge_point_type")
+}
+
+model ChargePoint {
+  id          Int      @id @default(autoincrement())
+  stationId   Int
+  type        ChargePointType @default(TYPE1)
+  powerKW     Float
+  pricePerKwh Float
+  status      ChargePointStatus @default(FREE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  station     Station  @relation(fields: [stationId], references: [id])
+
+  @@map("charge_points")
 }

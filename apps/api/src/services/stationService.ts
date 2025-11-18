@@ -18,6 +18,8 @@ export class StationService {
           name: parsed.name,
           latitude: parsed.latitude,
           longitude: parsed.longitude,
+          address: parsed.address,
+          workingHours: parsed.workingHours,
         },
       })
 
@@ -36,6 +38,9 @@ export class StationService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: {
+          chargePoints: true,
+        },
       }),
       this.prisma.station.count(),
     ])
@@ -56,6 +61,9 @@ export class StationService {
   async findById(id: number) {
     const station = await this.prisma.station.findUnique({
       where: { id },
+      include: {
+        chargePoints: true,
+      },
     })
 
     if (!station) {
@@ -115,6 +123,8 @@ export class StationService {
         name: string
         latitude: number
         longitude: number
+        address: string
+        workingHours: string
         createdAt: Date
         updatedAt: Date
         distance: number
@@ -125,6 +135,8 @@ export class StationService {
         name,
         latitude,
         longitude,
+        address,
+        "workingHours",
         "createdAt",
         "updatedAt",
         (

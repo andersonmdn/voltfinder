@@ -4,7 +4,10 @@ import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import fastify from 'fastify'
 import { jsonSchemaTransform, jsonSchemaTransformObject, serializerCompiler, validatorCompiler, ZodTypeProvider } from 'fastify-type-provider-zod'
+import fs from 'fs'
+import path from 'path'
 import { authRoutes } from './routes/auth'
+import { chargePointRoutes } from './routes/chargePoints'
 import { stationRoutes } from './routes/stations'
 import { userRoutes } from './routes/users'
 import { createServices } from './services'
@@ -55,6 +58,7 @@ export const buildApp = async () => {
 
   // Decorate app with services using Fastify decorators
   app.decorate('authService', services.authService)
+  app.decorate('chargePointService', services.chargePointService)
   app.decorate('stationService', services.stationService)
   app.decorate('userService', services.userService)
   app.decorate('prisma', services.prisma)
@@ -84,6 +88,28 @@ export const buildApp = async () => {
   await app.register(swaggerUI, {
     routePrefix: '/docs',
     logLevel: 'debug',
+    uiConfig: {
+      docExpansion: 'list',
+      deepLinking: false,
+    },
+    theme: {
+      title: 'VoltFinder API Docs',
+      favicon: [
+        {
+          type: 'image/png',
+          filename: path.join(__dirname, '../assets/swagger-logo.png'),
+          content: fs.readFileSync(path.join(__dirname, '../assets/swagger-logo.png')),
+          rel: 'icon',
+          sizes: '32x32',
+        },
+      ],
+    },
+    logo: {
+      type: 'image/png',
+      content: fs.readFileSync(path.join(__dirname, '../assets/swagger-logo.png')),
+      href: '/docs',
+      target: '_blank',
+    },
   })
 
   // Global error handler
@@ -133,6 +159,7 @@ export const buildApp = async () => {
 
   // Register routes
   await app.register(authRoutes, { prefix: '/api/auth' })
+  await app.register(chargePointRoutes, { prefix: '/api/charge-points' })
   await app.register(stationRoutes, { prefix: '/api/stations' })
   await app.register(userRoutes, { prefix: '/api/users' })
 
